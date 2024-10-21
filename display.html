@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lcue Display</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: black;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    const { ipcRenderer } = require("electron");
+    let showing = null;
+
+    const Files = {}
+    document.body.addEventListener("contextmenu", () => {
+      ipcRenderer.send("openConfig")
+    });
+
+    ipcRenderer.on('file-list', (event, files) => {
+      // Create list items for each file
+
+      files.forEach(file => {
+        if (Files[file]) return;
+        Files[file] = createMediaElement(file);
+        document.body.appendChild(Files[file]);
+      });
+    });
+    ipcRenderer.on('file-added', (event, file) => {
+      // Create list items for each file
+
+      if (Files[file]) Files[file].remove();
+      Files[file] = createMediaElement(file);
+      document.body.appendChild(Files[file]);
+    });
+    ipcRenderer.on('file-rename', (event, oldName, newName) => {
+      // Create list items for each file
+      
+      if (Files[oldName]) {
+        if (Files[newName]) Files[newName].remove();
+        Files[newName] = Files[oldName];
+        delete Files[oldName];
+      } else {
+        if (Files[newName]) Files[newName].remove();
+        Files[newName] = createMediaElement(newName);
+        document.body.appendChild(Files[newName]);
+      }
+    });
+    ipcRenderer.on('file-removed', (event, file) => {
+      // Create list items for each file
+
+      if (Files[file]) Files[file].remove();
+      delete Files[file];
+    });
+
+    ipcRenderer.on('file-show', (event, file, style) => {
+      // Create list items for each file
+      if(!Files[file]) throw new Error(`File '${file}' could not be found. ( display.html )`);
+      if(showing) showing.style.display = "none";
+      showing = Files[file];
+      showing.style.display = "block";
+    });
+
+
+    function createMediaElement(fileUrl, onLoad) {
+      // Get the file extension
+      fileUrl = "./content/" + fileUrl;
+      const extension = fileUrl.split('.').pop().toLowerCase();
+
+      let mediaElement;
+
+      // Create the appropriate HTML element based on the file type
+      switch (extension) {
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+        case 'bmp':
+        case 'svg':
+          mediaElement = document.createElement('img');
+          mediaElement.src = fileUrl;
+          mediaElement.addEventListener("load", onLoad)
+          break;
+
+        case 'mp4':
+        case 'webm':
+        case 'ogg':
+          mediaElement = document.createElement('video');
+          mediaElement.src = fileUrl;
+          mediaElement.controls = true; // Show controls
+          mediaElement.addEventListener("canplaythrough", onLoad)
+          break;
+
+        case 'mp3':
+        case 'wav':
+        case 'ogg':
+          mediaElement = document.createElement('audio');
+          mediaElement.src = fileUrl;
+          mediaElement.controls = true; // Show controls
+          mediaElement.addEventListener("canplaythrough", onLoad)
+          break;
+
+        default:
+          console.error('Unsupported file type:', extension);
+          return null; // Return null for unsupported types
+      }
+
+      // Optionally set some default styling or attributes
+      mediaElement.style.maxWidth = '100%'; // Responsive size
+      mediaElement.style.width = 'auto'; // Responsive size
+      mediaElement.style.height = 'auto'; // Maintain aspect ratio
+      mediaElement.style.display = 'none'; // Hidden by default
+
+      return mediaElement; // Return the created element
+    }
+  </script>
+</body>
+
+</html>

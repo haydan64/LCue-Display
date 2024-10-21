@@ -1,0 +1,19 @@
+{
+  "name": "lcue-display",
+  "version": "1.0.0",
+  "description": "Lcue Display is a client that can be controlled by Lcue Control for displaying videos, images, and playing sounds!",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Haydan Fisher",
+  "license": "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "electron": "^32.2.0",
+    "express": "^4.21.1",
+    "multer": "^1.4.5-lts.1",
+    "socket.io-client": "^4.8.0"
+  }
+}

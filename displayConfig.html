@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lcue Display - Config</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #333;
+            text-align: center;
+        }
+
+        .title img {
+            height: 1.3em;
+            width: 1.3em;
+            border-radius: 100%;
+            margin-right: 0.3em;
+        }
+
+        .playlist {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .playlist-item {
+            padding: 10px;
+            background: #e9e9e9;
+            cursor: move;
+            border-bottom: 1px solid #ccc;
+            user-select: none;
+        }
+
+        .playlist-item:last-child {
+            border-bottom: none;
+        }
+
+        .playlist-name {
+            cursor: pointer;
+            background: #f4f4f4;
+            padding: 10px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .playlist-files {
+            display: none;
+            padding-left: 10px;
+        }
+
+        .expanded .playlist-files {
+            display: block;
+        }
+
+        .drag-over {
+            background-color: #ccc;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: inline-block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="button"],
+        .form-group input[type="checkbox"] {
+            width: min-content;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .file-list li {
+            background: #e9e9e9;
+            margin: 5px 0;
+            padding: 10px;
+            position: relative;
+        }
+
+        .file-list li:hover .file-actions {
+            display: block;
+        }
+
+        .file-actions {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
+
+        .file-actions button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            background: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition-duration: 0.25s;
+        }
+
+        .file-actions button:hover {
+            margin-left: 5px;
+            padding: 5px 10px;
+            background: #525252;
+            box-shadow: 2px 2px 2px #000000;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #333;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            transition-duration: 0.25s;
+        }
+
+        .btn:hover {
+            box-shadow: 5px 5px 5px #000000;
+            background: #555;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            max-height: 100vh;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="title"><img id="display" src="lcueLogo.png" />Lcue Display - Config</h1>
+        <div class="form-group">
+            <label for="displayName">Display Name</label><br>
+            <input type="text" id="displayName">
+            <input type="button" id="displayNameSave" value="Save">
+        </div>
+        <div class="form-group">
+            <label for="lcueServerAddress">Lcue Server Address</label><br>
+            <input type="text" id="lcueServerAddress">
+            <input type="button" id="lcueServerAddressSave" value="Save">
+        </div>
+        <div class="form-group">
+            <label for="alwaysOnTop">Always On Top</label>
+            <input type="checkbox" id="alwaysOnTop">
+        </div>
+        <div class="form-group">
+            <label for="startFullscreen">Start Fullscreen</label>
+            <input type="checkbox" id="startFullscreen">
+        </div>
+        <div class="form-group">
+            <label for="startInKiosk">Start In Kiosk Mode</label>
+            <input type="checkbox" id="startInKiosk">
+        </div>
+        <h2>Content Files</h2>
+        <ul id="fileList" class="file-list">
+            Loading...
+        </ul>
+        <button class="btn" id="uploadFile">Add File</button>
+        <h2>Playlists</h2>
+        <ul id="playlists" class="playlists">
+            <li class="playlist" data-id="1">
+                <div class="playlist-name">Playlist 1</div>
+                <ul class="playlist-files" id="playlist1">
+                    <li class="playlist-item" draggable="true">File 1</li>
+                    <li class="playlist-item" draggable="true">File 2</li>
+                    <li class="playlist-item" draggable="true">File 3</li>
+                </ul>
+            </li>
+            <li class="playlist" data-id="2">
+                <div class="playlist-name">Playlist 2</div>
+                <ul class="playlist-files" id="playlist2">
+                    <li class="playlist-item" draggable="true">File A</li>
+                    <li class="playlist-item" draggable="true">File B</li>
+                    <li class="playlist-item" draggable="true">File C</li>
+                </ul>
+            </li>
+        </ul>
+        <button class="btn" id="newPlaylist">Create Playlist</button>
+    </div>
+    <!-- Modals -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeViewModal()">&times;</span>
+            <p id="viewPreviewTitle">Loading file...</p>
+            <div id="viewModalPreview"></div>
+            <!-- Your file viewing logic here -->
+        </div>
+    </div>
+
+    <div id="renameModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRenameModal()">&times;</span>
+            <p>Renaming file...</p>
+            <input type="text" id="newFileName" placeholder="Enter new file name">
+            <p id="renamePreviewTitle">Loading file...</p>
+            <div id="renameModalPreview"></div>
+            <button class="btn">Rename</button>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDeleteModal()">&times;</span>
+            <p>Are you sure you want to delete this file?</p>
+            <p id="deletePreviewTitle">Loading file...</p>
+            <div id="deleteModalPreview"></div>
+            <button class="btn" onclick="deleteFile()">Delete</button>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const Elms = {
+            displayName: document.getElementById("displayName"),
+            displayNameSave: document.getElementById("displayNameSave"),
+            lcueServerAddress: document.getElementById("lcueServerAddress"),
+            lcueServerAddressSave: document.getElementById("lcueServerAddressSave"),
+            alwaysOnTop: document.getElementById("alwaysOnTop"),
+            startFullscreen: document.getElementById("startFullscreen"),
+            startInKiosk: document.getElementById("startInKiosk"),
+            fileList: document.getElementById("fileList"),
+            uploadFile: document.getElementById("uploadFile"),
+            viewModal: document.getElementById("viewModal"),
+            viewPreviewTitle: document.getElementById("viewPreviewTitle"),
+            viewModalPreview: document.getElementById("viewModalPreview"),
+            renameModal: document.getElementById("renameModal"),
+            renamePreviewTitle: document.getElementById("renamePreviewTitle"),
+            renameModalPreview: document.getElementById("renameModalPreview"),
+            newFileName: document.getElementById("newFileName"),
+            deleteModal: document.getElementById("deleteModal"),
+            deletePreviewTitle: document.getElementById("deletePreviewTitle"),
+            deleteModalPreview: document.getElementById("deleteModalPreview"),
+        }
+
+        // Listen for the file list sent from the main process
+        ipcRenderer.on('file-list', (event, files) => {
+            Elms.fileList.innerHTML = ''; // Clear existing content
+            console.log(files)
+            // Create list items for each file
+            files.forEach(file => {
+                const li = document.createElement('li');
+                li.textContent = file; // Display the file name
+                li.appendChild(createFileActions(file))
+
+
+
+                Elms.fileList.appendChild(li);
+            });
+        });
+        ipcRenderer.on('config', (event, config) => {
+            console.log("Config: ", config);
+            Elms.displayName.value = config.displayName;
+            Elms.lcueServerAddress.value = config.lcueServerAddress;
+            Elms.alwaysOnTop.checked = config.alwaysOnTop;
+            Elms.startFullscreen.checked = config.startFullscreen;
+            Elms.startInKiosk.checked = config.startInKiosk;
+        });
+
+        Elms.displayNameSave.addEventListener("click", saveDisplayName)
+        Elms.displayName.addEventListener("keypress", () => {
+            if (event.key === "Enter") {
+                saveDisplayName();
+            }
+        });
+        function saveDisplayName() {
+            ipcRenderer.send("displayName", Elms.displayName.value);
+        }
+
+        Elms.lcueServerAddressSave.addEventListener("click", saveServerAddress)
+        Elms.lcueServerAddress.addEventListener("keypress", () => {
+            if (event.key === "Enter") {
+                saveServerAddress();
+            }
+        });
+        function saveServerAddress() {
+            ipcRenderer.send("lcueServerAddress", Elms.lcueServerAddress.value);
+        }
+
+        Elms.alwaysOnTop.addEventListener("change", () => {
+            ipcRenderer.send("alwaysOnTop", Elms.alwaysOnTop.checked);
+        });
+        Elms.startFullscreen.addEventListener("change", () => {
+            ipcRenderer.send("startFullscreen", Elms.startFullscreen.checked);
+        });
+        Elms.startInKiosk.addEventListener("change", () => {
+            ipcRenderer.send("startInKiosk", Elms.startInKiosk.checked);
+        });
+
+        Elms.uploadFile.addEventListener("click", () => {
+            ipcRenderer.send("uploadContent");
+        })
+
+
+        function createFileActions(file) {
+            const fileActionsDiv = document.createElement("div");
+            const displayButton = document.createElement("button");
+            const viewButton = document.createElement("button");
+            const renameButton = document.createElement("button");
+            const deleteButton = document.createElement("button");
+            displayButton.textContent = "Display";
+            viewButton.textContent = "View";
+            renameButton.textContent = "Rename";
+            deleteButton.textContent = "Delete";
+            displayButton.addEventListener("click", () => {
+                ipcRenderer.send("file-show", file);
+            });
+            viewButton.addEventListener("click", () => {
+                openViewModal(file);
+            });
+            renameButton.addEventListener("click", () => {
+                openRenameModal(file);
+            })
+            deleteButton.addEventListener("click", () => {
+                openDeleteModal(file);
+            })
+            fileActionsDiv.appendChild(displayButton);
+            fileActionsDiv.appendChild(viewButton);
+            fileActionsDiv.appendChild(renameButton);
+            fileActionsDiv.appendChild(deleteButton);
+            fileActionsDiv.classList.add("file-actions")
+            return fileActionsDiv;
+        }
+
+
+        function openViewModal(file) {
+            Elms.viewModal.style.display = 'block';
+            Elms.viewPreviewTitle.textContent = `Loading ${file}`;
+            Elms.viewModalPreview.textContent = "";
+            Elms.viewModalPreview.appendChild(createMediaElement('content/' + file, () => {
+                Elms.viewPreviewTitle.textContent = file;
+            }));
+        }
+        function openRenameModal(file) {
+            Elms.renameModal.style.display = 'block';
+            Elms.newFileName.value = file;
+            Elms.renamePreviewTitle.textContent = `Loading ${file}`;
+            Elms.renameModalPreview.textContent = "";
+            Elms.renameModalPreview.appendChild(createMediaElement('content/' + file, () => {
+                Elms.renamePreviewTitle.textContent = file;
+            }));
+        }
+        function openDeleteModal(file) {
+            Elms.deleteModal.style.display = 'block';
+            Elms.deletePreviewTitle.textContent = `Loading ${file}`;
+            Elms.deleteModalPreview.textContent = "";
+            Elms.deleteModalPreview.appendChild(createMediaElement('content/' + file, () => {
+                Elms.deletePreviewTitle.textContent = file;
+            }));
+        }
+
+        function closeViewModal() {
+            Elms.viewModal.style.display = 'none';
+        }
+        function closeRenameModal() {
+            Elms.renameModal.style.display = 'none';
+        }
+        function closeDeleteModal() {
+            Elms.deleteModal.style.display = 'none';
+        }
+
+        function deleteFile() {
+            // Your file deletion logic here
+            closeModal('deleteModal');
+        }
+
+        function createMediaElement(fileUrl, onLoad) {
+            // Get the file extension
+            const extension = fileUrl.split('.').pop().toLowerCase();
+
+            let mediaElement;
+
+            // Create the appropriate HTML element based on the file type
+            switch (extension) {
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                case 'gif':
+                case 'bmp':
+                case 'svg':
+                    mediaElement = document.createElement('img');
+                    mediaElement.src = fileUrl;
+                    mediaElement.addEventListener("load", onLoad)
+                    break;
+
+                case 'mp4':
+                case 'webm':
+                case 'ogg':
+                    mediaElement = document.createElement('video');
+                    mediaElement.src = fileUrl;
+                    mediaElement.controls = true; // Show controls
+                    mediaElement.addEventListener("canplaythrough", onLoad)
+                    break;
+
+                case 'mp3':
+                case 'wav':
+                case 'ogg':
+                    mediaElement = document.createElement('audio');
+                    mediaElement.src = fileUrl;
+                    mediaElement.controls = true; // Show controls
+                    mediaElement.addEventListener("canplaythrough", onLoad)
+                    break;
+
+                default:
+                    console.error('Unsupported file type:', extension);
+                    return null; // Return null for unsupported types
+            }
+
+            // Optionally set some default styling or attributes
+            mediaElement.style.maxWidth = '100%'; // Responsive size
+            mediaElement.style.width = 'auto'; // Responsive size
+            mediaElement.style.height = 'auto'; // Maintain aspect ratio
+            mediaElement.style.maxHeight = '85vh'; // Maintain aspect ratio
+
+            return mediaElement; // Return the created element
+        }
+    </script>
+</body>
+
+</html>
