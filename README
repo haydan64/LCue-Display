@@ -1,0 +1,24 @@
+# LCue Display
+
+LCue Display transforms multiple screens into dynamic show displays, seamlessly controlled via the LCue Server. Integrate effortlessly with the EOS Light Board, any OSC device, or our proprietary LCue Control software for a fully synchronized and immersive experience.
+
+## Repositories
+
+- [LCue Server](https://github.com/your-username/LCue-Server): Backend server that manages and controls the displays.
+- [LCue Control](https://github.com/your-username/LCue-Control): Frontend control interface for managing cues and displays.
+
+## Installation
+
+Follow the instructions in each repository to set up and run the respective components.
+
+## Usage
+
+Once all components are set up, you can start creating and managing your show displays using LCue Display, controlled via LCue Server and LCue Control.
+
+## License
+
+This project is licensed under the Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0). See the LICENSE file for details.
+
+---
+
+Happy cueing! If you have any questions or need help, feel free to reach out.
