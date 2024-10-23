@@ -4,8 +4,8 @@ LCue Display transforms multiple screens into dynamic show displays, seamlessly 
 
 ## Repositories
 
-- [LCue Server](https://github.com/your-username/LCue-Server): Backend server that manages and controls the displays.
-- [LCue Control](https://github.com/your-username/LCue-Control): Frontend control interface for managing cues and displays.
+- [LCue Server](https://github.com/haydan64/LCue-Server): Backend server that manages and controls the displays.
+- [LCue Control](https://github.com/haydan64/LCue-Control): Frontend control interface for managing cues and displays.
 
 ## Installation
 
