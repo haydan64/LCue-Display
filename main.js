@@ -9,6 +9,7 @@ if (!db.get("displayID")) {
     db.set("displayID", Math.floor(Math.random() * 1e9))
 }
 const displayID = db.get("displayID");
+let fileList = getFilesFromDirectory("content");
 
 if (!db.get("displayName")) {
     const words = fs.readFileSync("./words.txt").toString().split("\n");
@@ -32,14 +33,24 @@ function connectToServer(serverAddress) {
                 baseURL: `http://${serverAddress}`
             });
 
-            socket = ioClient(`http://${serverAddress}`);
+            socket = ioClient(`http://${serverAddress}/display`);
 
             socket.on('connect', () => {
                 socket.emit("id", {
                     deviceType: "display",
                     id: displayID
-                })
+                });
+                socket.emit("fileList", fileList)
             });
+
+            socket.on('showFile', showFile)
+            socket.on('showPlaylist', showPlaylist)
+            socket.on('advancePlaylist', advancePlaylist)
+            socket.on('downloadFile', downloadFile)
+            socket.on('alwaysOnTop', alwaysOnTop)
+            socket.on('startFullScreen', startFullscreen)
+            socket.on('startInKiosk', startInKiosk)
+            socket.on('displayName', displayName)
 
             socket.on('disconnect', () => {
                 socket.on('disconnect', () => {
@@ -75,8 +86,17 @@ function changeServerAddress(newAddress) {
     connectToServer(serverAddress); // Try to connect to the new address
 }
 
+function emit(event, data) {
+    if (socket) {
+        socket.emit(event, data);
+    }
+}
 
-let window, configWindow = null;
+/**
+ * @type BrowserWindow
+ */
+let window;
+let configWindow = null;
 
 function createWindows() {
     // Create the control window
@@ -145,19 +165,19 @@ function createConfigWindow() {
 
 
 ipcMain.on('displayName', (e, name) => {
-    db.set("displayName", name);
+    displayName(name);
 })
 ipcMain.on('lcueServerAddress', (e, address) => {
     db.set("lcueServerAddress", address);
 })
 ipcMain.on('alwaysOnTop', (e, enabled) => {
-    db.set("alwaysOnTop", !!enabled);
+    alwaysOnTop(enabled);
 })
 ipcMain.on('startFullscreen', (e, enabled) => {
-    db.set("startFullscreen", !!enabled);
+    startFullscreen(enabled);
 })
 ipcMain.on('startInKiosk', (e, enabled) => {
-    db.set("startInKiosk", !!enabled);
+    startInKiosk(enabled);
 })
 ipcMain.on('uploadContent', async (e) => {
     const result = await dialog.showOpenDialog({
@@ -176,7 +196,7 @@ ipcMain.on('uploadContent', async (e) => {
     }
     result.filePaths.forEach((filePath) => {
         const fileName = path.basename(filePath); // Get the file name from the file path
-        const destinationPath = path.join(contentDir, fileName);
+        const destinationPath = path.join(contentDir, sanitizeFilename(fileName));
 
         // Copy the file to the /content directory
         fs.copyFile(filePath, destinationPath, (err) => {
@@ -186,14 +206,85 @@ ipcMain.on('uploadContent', async (e) => {
             } else {
                 console.log('File uploaded successfully:', destinationPath);
                 e.reply('upload-result', { success: true, message: 'File uploaded successfully' });
-                configWindow.webContents.send('file-list', getFilesFromDirectory("content"));
+                fileList = getFilesFromDirectory("content")
+                configWindow.webContents.send('file-list', fileList);
+                emit("fileList", fileList);
             }
         });
     })
 });
 ipcMain.on('file-show', async (e, file) => {
-    window.webContents.send("file-show", file)
+    showFile(file);
 });
+
+/**
+ * Sets the display's name.
+ * @param {String} name Set the name of the display to this value
+ */
+function displayName(name) {
+    let sanitized = sanitizeName(name);
+    db.set("displayName", sanitized);
+    emit("displayName", sanitized)
+    window?.setTitle(`LCue Display (${sanitized})`);
+}
+/**
+ * Set's the main window to Always on top.
+ * Will also start Always On Top.
+ * @param {Boolean} enabled Weather Always On Top is enabled.
+ */
+function alwaysOnTop(enabled) {
+    db.set("alwaysOnTop", !!enabled);
+    emit("alwaysOnTop", !!enabled)
+    window?.setAlwaysOnTop(!!enabled);
+}
+/**
+ * Sets weather the main window should open fullscreened.
+ * @param {Boolean} enabled Weather start Fullscreened is enabled.
+ */
+function startFullscreen(enabled) {
+    emit("startFullscreen", !!enabled);
+    db.set("startFullscreen", !!enabled);
+}
+/**
+ * Sets weather the main window should open Kiosked.
+ * @param {*} enabled Weather start Kiosked is enabled.
+ */
+function startInKiosk(enabled) {
+    emit("startInKiosk", !!enabled);
+    db.set("startInKiosk", !!enabled);
+}
+/**
+ * Makes the main window display this file.
+ * @param {String} file The filename of the file.
+ * @param {String} [transition] Transition to use for the file (Overides Default)
+ * @param {String} [transitionDuration] duration of the transition (Overides Default)
+ */
+function showFile(file, transition, transitionDuration) {
+    emit("showingFile", file);
+    window.webContents.send("file-show", file, transition, transitionDuration)
+}
+/**
+ * Makes the main window display this playlist.
+ * @param {Number} playlistNumber The number of the playlist to show.
+ * @param {Object} [options] Optional parameters.
+ * @param {Number} [options.startAtFileNumber = 1] The file number to start at.
+ * @param {Boolean} [options.resumeFromLeftOff = false] Whether to resume from where it left off.
+ * @param {Boolean} [options.autoAdvance = true] Whether to auto-advance.
+ * @param {String} [options.transition = 'default'] Transition to use.
+ * @param {String} [options.transitionDuration = 'default'] Duration of the transition.
+ */
+function showPlaylist(playlistNumber, options = {}) {
+    const {
+        startAtFileNumber = 1,
+        resumeFromLeftOff = false,
+        autoAdvance = true,
+        transition = 'default',
+        transitionDuration = 'default'
+    } = options;
+}
+function advancePlaylist() {
+
+}
 
 app.whenReady().then(createWindows);
 
@@ -205,6 +296,17 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindows();
 });
 
+
+
+function sanitizeName(name) {
+    return name.replace(/[^a-zA-Z0-9 ]/g, ''); // Remove any characters that are not letters, numbers, or spaces
+}
+function sanitizeFilename(filename) {
+    // Replace any invalid characters with an underscore
+    return filename.replace(/[<>:"\/\\|?*\x00-\x1F]/g, '_')
+                   .replace(/[\x7F]/g, '_')
+                   .replace(/\.+$/, ''); // Remove trailing periods
+}
 
 
 function getFilesFromDirectory(directoryPath) {
