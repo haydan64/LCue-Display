@@ -11,11 +11,11 @@ if (!db.get("displayID")) {
 const displayID = db.get("displayID");
 let fileList = getFilesFromDirectory("content");
 let playlists = {};
-getFilesFromDirectory("playlists").forEach((playlist)=> {
+getFilesFromDirectory("playlists").forEach((playlist) => {
     try {
         let playlist = JSON.stringify(fs.readFileSync(playlist));
         playlist[playlist.id] = playlist;
-    } catch(e) {
+    } catch (e) {
         return {};
     }
 })
@@ -232,6 +232,39 @@ ipcMain.on('file-show', async (e, file) => {
     showFile(file);
 });
 
+function downloadFile(filePath) {
+    return new Promise(async(resolve, reject) => {
+        try {
+            // Use Axios to download the file
+            const url = `http://${db.get("lcueServerAddress")}/download/${filePath}`;
+            const response = await axios({
+                method: 'GET',
+                url: url,
+                responseType: 'stream'
+            });
+
+            // Create a writable stream to save the file
+            const savePath = path.join(__dirname, 'content', path.basename(filePath));
+            const writer = fs.createWriteStream(savePath);
+
+            // Pipe the response data to the writable stream
+            response.data.pipe(writer);
+
+            // Return a promise that resolves when the file is fully written
+            writer.on('finish', ()=>{
+                resolve();
+                fileList = getFilesFromDirectory("content");
+                emit("fileList", fileList);
+                if(configWindow) configWindow.webContents.send('file-list', fileList);
+            });
+            writer.on('error', reject);
+        } catch (error) {
+            console.error(`Error downloading the file: ${error.message}`);
+            reject("error");
+        }
+    });
+}
+
 /**
  * Sets the display's name.
  * @param {String} name Set the name of the display to this value
@@ -319,8 +352,8 @@ function sanitizeName(name) {
 function sanitizeFilename(filename) {
     // Replace any invalid characters with an underscore
     return filename.replace(/[<>:"\/\\|?*\x00-\x1F]/g, '_')
-                   .replace(/[\x7F]/g, '_')
-                   .replace(/\.+$/, ''); // Remove trailing periods
+        .replace(/[\x7F]/g, '_')
+        .replace(/\.+$/, ''); // Remove trailing periods
 }
 
 
