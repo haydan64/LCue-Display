@@ -10,6 +10,15 @@ if (!db.get("displayID")) {
 }
 const displayID = db.get("displayID");
 let fileList = getFilesFromDirectory("content");
+let playlists = {};
+getFilesFromDirectory("playlists").forEach((playlist)=> {
+    try {
+        let playlist = JSON.stringify(fs.readFileSync(playlist));
+        playlist[playlist.id] = playlist;
+    } catch(e) {
+        return {};
+    }
+})
 
 if (!db.get("displayName")) {
     const words = fs.readFileSync("./words.txt").toString().split("\n");
@@ -36,11 +45,17 @@ function connectToServer(serverAddress) {
             socket = ioClient(`http://${serverAddress}/display`);
 
             socket.on('connect', () => {
-                socket.emit("id", {
-                    deviceType: "display",
-                    id: displayID
+                socket.emit("register", {
+                    displayVersion: 0,//Protocol version
+                    id: displayID,
+                    name: db.get("displayName"),
+                    alwaysOnTop: db.get("alwaysOnTop"),
+                    startFullscreen: db.get("startFullscreen"),
+                    startInKiosk: db.get("startInKiosk"),
+                    files: fileList,
+                    playlists: playlists
                 });
-                socket.emit("fileList", fileList)
+                socket.emit("fileList", fileList);
             });
 
             socket.on('showFile', showFile)
@@ -234,7 +249,7 @@ function displayName(name) {
  */
 function alwaysOnTop(enabled) {
     db.set("alwaysOnTop", !!enabled);
-    emit("alwaysOnTop", !!enabled)
+    emit("alwaysOnTop", !!enabled);
     window?.setAlwaysOnTop(!!enabled);
 }
 /**
