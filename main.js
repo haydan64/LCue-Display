@@ -58,14 +58,14 @@ function connectToServer(serverAddress) {
                 socket.emit("fileList", fileList);
             });
 
-            socket.on('showFile', showFile)
-            socket.on('showPlaylist', showPlaylist)
-            socket.on('advancePlaylist', advancePlaylist)
-            socket.on('downloadFile', downloadFile)
-            socket.on('alwaysOnTop', alwaysOnTop)
-            socket.on('startFullScreen', startFullscreen)
-            socket.on('startInKiosk', startInKiosk)
-            socket.on('displayName', displayName)
+            socket.on('showFile', showFile);
+            socket.on('showPlaylist', showPlaylist);
+            socket.on('advancePlaylist', advancePlaylist);
+            socket.on('downloadFile', downloadFile);
+            socket.on('alwaysOnTop', alwaysOnTop);
+            socket.on('startFullScreen', startFullscreen);
+            socket.on('startInKiosk', startInKiosk);
+            socket.on('displayName', displayName);
 
             socket.on('disconnect', () => {
                 socket.on('disconnect', () => {
