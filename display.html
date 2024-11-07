@@ -2,142 +2,301 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lcue Display</title>
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      max-height: 100vh;
-      max-width: 100vw;
-      background-color: black;
-      overflow: hidden;
-    }
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lcue Display</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            max-height: 100vh;
+            max-width: 100vw;
+            overflow: hidden;
+            background-color: var(--background-color);
+        }
 
-    .mediaElement {
-        max-width: 100%;
-        max-height: 100%;
-        width: 100%;
-        height: 100%;
+        .mediaElement {
+            max-width: 100%;
+            max-height: 100%;
+            width: 100%;
+            height: 100%;
+            position: fixed;
 
-        object-fit: cover;
-    }
-  </style>
+            object-fit: cover;
+        }
+
+
+        /* Base styles for transitions */
+        .transition {
+            transition: all var(--transition-duration) ease-in-out;
+        }
+
+        /* Fade */
+        .fade-enter {
+            opacity: 0;
+        }
+
+        .fade-enter-active {
+            opacity: 1;
+        }
+
+        /* Slide Up */
+        .slideUp-enter {
+            transform: translateY(100%);
+        }
+
+        .slideUp-enter-active {
+            transform: translateY(0);
+        }
+
+        /* Slide Down */
+        .slideDown-enter {
+            transform: translateY(-100%);
+        }
+
+        .slideDown-enter-active {
+            transform: translateY(0);
+        }
+
+        /* Slide Left */
+        .slideLeft-enter {
+            transform: translateX(100%);
+        }
+
+        .slideLeft-enter-active {
+            transform: translateX(0);
+        }
+
+        /* Slide Right */
+        .slideRight-enter {
+            transform: translateX(-100%);
+        }
+
+        .slideRight-enter-active {
+            transform: translateX(0);
+        }
+
+        /* Wipe Up */
+        .wipeUp-enter {
+            transform-origin: bottom;
+            transform: scaleY(0);
+        }
+
+        .wipeUp-enter-active {
+            transform: scaleY(1);
+        }
+
+        /* Wipe Down */
+        .wipeDown-enter {
+            transform-origin: top;
+            transform: scaleY(0);
+        }
+
+        .wipeDown-enter-active {
+            transform: scaleY(1);
+        }
+
+        /* Wipe Left */
+        .wipeLeft-enter {
+            transform-origin: right;
+            transform: scaleX(0);
+        }
+
+        .wipeLeft-enter-active {
+            transform: scaleX(1);
+        }
+
+        /* Wipe Right */
+        .wipeRight-enter {
+            transform-origin: left;
+            transform: scaleX(0);
+        }
+
+        .wipeRight-enter-active {
+            transform: scaleX(1);
+        }
+
+        /* Dip to Black / White */
+        .dipToBlack-enter,
+        .dipToWhite-enter {
+            opacity: 0;
+            background-color: var(--background-color);
+        }
+
+        .dipToBlack-enter-active,
+        .dipToWhite-enter-active {
+            opacity: 1;
+        }
+
+        /* Iris */
+        .iris-enter {
+            clip-path: circle(0% at center);
+        }
+
+        .iris-enter-active {
+            clip-path: circle(100% at center);
+        }
+
+        /* Zoom In */
+        .zoomIn-enter {
+            transform: scale(0);
+        }
+
+        .zoomIn-enter-active {
+            transform: scale(1);
+        }
+    </style>
 </head>
 
 <body>
-  <script>
-    const { ipcRenderer } = require("electron");
-    let showing = null;
+    <script>
+        const { ipcRenderer } = require("electron");
+        let showing = null;
 
-    const Files = {}
-    document.body.addEventListener("contextmenu", () => {
-      ipcRenderer.send("openConfig")
-    });
+        const Files = {}
+        document.body.addEventListener("contextmenu", () => {
+            ipcRenderer.send("openConfig")
+        });
 
-    ipcRenderer.on('file-list', (event, files) => {
-      // Create list items for each file
-      files.forEach(file => {
-        if (Files[file]) return;
-        Files[file] = createMediaElement(file);
-        if(Files[file].load)Files[file].load();
-        document.body.appendChild(Files[file]);
-      });
-    });
-    ipcRenderer.on('file-added', (event, file) => {
-      // Create list items for each file
+        ipcRenderer.on('file-list', (event, files) => {
+            // Create list items for each file
+            files.forEach(file => {
+                if (Files[file]) return;
+                Files[file] = createMediaElement(file);
+                if (Files[file].load) Files[file].load();
+                document.body.appendChild(Files[file]);
+            });
+        });
+        ipcRenderer.on('file-added', (event, file) => {
+            // Create list items for each file
 
-      if (Files[file]) Files[file].remove();
-      Files[file] = createMediaElement(file);
-      document.body.appendChild(Files[file]);
-    });
-    ipcRenderer.on('file-rename', (event, oldName, newName) => {
-      // Create list items for each file
-      
-      if (Files[oldName]) {
-        if (Files[newName]) Files[newName].remove();
-        Files[newName] = Files[oldName];
-        delete Files[oldName];
-      } else {
-        if (Files[newName]) Files[newName].remove();
-        Files[newName] = createMediaElement(newName);
-        document.body.appendChild(Files[newName]);
-      }
-    });
-    ipcRenderer.on('file-removed', (event, file) => {
-      // Create list items for each file
+            if (Files[file]) Files[file].remove();
+            Files[file] = createMediaElement(file);
+            document.body.appendChild(Files[file]);
+        });
+        ipcRenderer.on('file-rename', (event, oldName, newName) => {
+            // Create list items for each file
 
-      if (Files[file]) Files[file].remove();
-      delete Files[file];
-    });
+            if (Files[oldName]) {
+                if (Files[newName]) Files[newName].remove();
+                Files[newName] = Files[oldName];
+                delete Files[oldName];
+            } else {
+                if (Files[newName]) Files[newName].remove();
+                Files[newName] = createMediaElement(newName);
+                document.body.appendChild(Files[newName]);
+            }
+        });
+        ipcRenderer.on('file-removed', (event, file) => {
+            // Create list items for each file
 
-    ipcRenderer.on('file-show', (event, file, style) => {
-      // Create list items for each file
-      if(!Files[file]) throw new Error(`File '${file}' could not be found. ( display.html )`);
-      if(showing) showing.style.display = "none";
-      showing = Files[file];
-      if(showing.play) showing.play();
-      showing.style.display = "block";
-    });
+            if (Files[file]) Files[file].remove();
+            delete Files[file];
+        });
+
+        ipcRenderer.on('file-show', (event, file, fileAction, transition, transitionDuration) => {
+            if (!Files[file]) throw new Error(`File '${file}' could not be found. ( display.html )`);
+
+            // Ensure the current showing element finishes its transition and stays visible
+            if (showing) {
+                showing.style.zIndex = "0";
+            }
+            
+            // Get the new element to show
+            const newShowing = Files[file];
+            newShowing.style.zIndex = "1000"; // Bring new element on top
+            
+            // Apply transition duration
+            newShowing.style.setProperty('--transition-duration', transitionDuration + 'ms');
+            
+            // Store the transition name for cleanup purposes
+            newShowing.dataset.transition = transition;
+            
+            // Apply the transition classes
+            newShowing.classList.add('transition', transition + '-enter');
+            
+            // Trigger the transition
+            requestAnimationFrame(() => {
+                requestAnimationFrame(()=>{
+                    newShowing.classList.add(transition + '-enter-active');
+                })
+            });
+            
+            // Ensure the element becomes visible and starts playing if applicable
+            newShowing.style.display = "block";
+            if (newShowing.play) newShowing.play();
+            
+            // Clean up transition classes after it's complete
+            newShowing.addEventListener('transitionend', () => {
+                if (showing) {
+                    showing.style.display = "none";
+                    showing.classList.remove('transition', showing.dataset.transition + '-enter-active', showing.dataset.transition + '-enter');
+                }
+                newShowing.classList.remove('transition', transition + '-enter-active', transition + '-enter');
+                showing = newShowing; // Update the showing element
+            }, { once: true });
+        });
 
 
-    function createMediaElement(fileUrl, onLoad) {
-      // Get the file extension
-      fileUrl = "./content/" + fileUrl;
-      const extension = fileUrl.split('.').pop().toLowerCase();
 
-      let mediaElement;
 
-      // Create the appropriate HTML element based on the file type
-      switch (extension) {
-        case 'jpg':
-        case 'jpeg':
-        case 'png':
-        case 'gif':
-        case 'bmp':
-        case 'svg':
-          mediaElement = document.createElement('img');
-          mediaElement.src = fileUrl;
-          mediaElement.addEventListener("load", onLoad)
-          break;
 
-        case 'mp4':
-        case 'webm':
-        case 'ogg':
-          mediaElement = document.createElement('video');
-          mediaElement.src = fileUrl;
-          mediaElement.controls = false; // hide controls
-          mediaElement.addEventListener("canplaythrough", onLoad);
-          mediaElement.preload = "auto";
-          mediaElement.load();
-          break;
+        function createMediaElement(fileUrl, onLoad) {
+            // Get the file extension
+            fileUrl = "./content/" + fileUrl;
+            const extension = fileUrl.split('.').pop().toLowerCase();
 
-        case 'mp3':
-        case 'wav':
-        case 'ogg':
-          mediaElement = document.createElement('audio');
-          mediaElement.src = fileUrl;
-          mediaElement.controls = true; // Show controls
-          mediaElement.addEventListener("canplaythrough", onLoad)
-          break;
+            let mediaElement;
 
-        default:
-          console.error('Unsupported file type:', extension);
-          return null; // Return null for unsupported types
-      }
+            // Create the appropriate HTML element based on the file type
+            switch (extension) {
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                case 'gif':
+                case 'bmp':
+                case 'svg':
+                    mediaElement = document.createElement('img');
+                    mediaElement.src = fileUrl;
+                    mediaElement.addEventListener("load", onLoad)
+                    break;
 
-      // Optionally set some default styling or attributes
-      mediaElement.classList.add("mediaElement");
-      mediaElement.style.display = 'none'; // Hidden by default
+                case 'mp4':
+                case 'webm':
+                case 'ogg':
+                    mediaElement = document.createElement('video');
+                    mediaElement.src = fileUrl;
+                    mediaElement.controls = false; // hide controls
+                    mediaElement.addEventListener("canplaythrough", onLoad);
+                    mediaElement.preload = "auto";
+                    mediaElement.load();
+                    break;
 
-      return mediaElement; // Return the created element
-    }
-  </script>
+                case 'mp3':
+                case 'wav':
+                case 'ogg':
+                    mediaElement = document.createElement('audio');
+                    mediaElement.src = fileUrl;
+                    mediaElement.controls = true; // Show controls
+                    mediaElement.addEventListener("canplaythrough", onLoad)
+                    break;
+
+                default:
+                    console.error('Unsupported file type:', extension);
+                    return null; // Return null for unsupported types
+            }
+
+            // Optionally set some default styling or attributes
+            mediaElement.classList.add("mediaElement");
+            mediaElement.style.display = 'none'; // Hidden by default
+
+            return mediaElement; // Return the created element
+        }
+    </script>
 </body>
 
 </html>

@@ -307,9 +307,9 @@ function startInKiosk(enabled) {
  * @param {String} [transition] Transition to use for the file (Overides Default)
  * @param {String} [transitionDuration] duration of the transition (Overides Default)
  */
-function showFile(file, transition, transitionDuration) {
+function showFile(file, fileAction, transition, transitionDuration) {
     emit("showingFile", file);
-    window.webContents.send("file-show", file, transition, transitionDuration)
+    window.webContents.send("file-show", file, fileAction, transition, transitionDuration)
 }
 /**
  * Makes the main window display this playlist.
