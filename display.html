@@ -204,12 +204,20 @@
             // Ensure the current showing element finishes its transition and stays visible
             if (showing) {
                 showing.style.zIndex = "0";
+                if(transition === "cut") {
+                    if(showing.pause) showing.pause();
+                    if(showing.currentTime) showing.currentTime = 0;
+                }
             }
             
             // Get the new element to show
             const newShowing = Files[file];
             newShowing.style.zIndex = "1000"; // Bring new element on top
-            
+            if(fileAction === "loop") {
+                newShowing.loop = true;
+            } else {
+                newShowing.loop = false;
+            }
             // Apply transition duration
             newShowing.style.setProperty('--transition-duration', transitionDuration + 'ms');
             
@@ -233,6 +241,8 @@
             // Clean up transition classes after it's complete
             newShowing.addEventListener('transitionend', () => {
                 if (showing) {
+                    if(showing.pause) showing.pause();
+                    if(showing.currentTime) showing.currentTime = 0;
                     showing.style.display = "none";
                     showing.classList.remove('transition', showing.dataset.transition + '-enter-active', showing.dataset.transition + '-enter');
                 }
